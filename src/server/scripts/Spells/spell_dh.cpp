@@ -31,6 +31,68 @@ enum DemonHunterSpells
     SPELL_CHAOS_STRIKE_ENERGIZE             = 193840,
 };
 
+// 131347 - Glide
+class spell_dh_glide : public SpellScriptLoader
+{
+public:
+    spell_dh_glide() : SpellScriptLoader("spell_dh_glide") { }
+
+    class sspell_dh_glide_AuraScript : public AuraScript
+    {
+        PrepareAuraScript(sspell_dh_glide_AuraScript);
+
+        void OnApply(AuraEffect const* aurEff, AuraEffectHandleModes /*mode*/)
+        {
+            if (Unit* caster = GetCaster())
+            {
+                caster->CastSpell(caster, 196353, true);
+                caster->CastSpell(caster, 197154, true, NULL, aurEff);
+            }
+        }
+        void OnRemove(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
+        {
+            if (Unit* target = GetTarget())
+            {
+            }
+        }
+
+        void Register() override
+        {
+            AfterEffectApply += AuraEffectApplyFn(sspell_dh_glide_AuraScript::OnApply, EFFECT_0, SPELL_AURA_FEATHER_FALL, AURA_EFFECT_HANDLE_REAL);
+            OnEffectRemove += AuraEffectRemoveFn(sspell_dh_glide_AuraScript::OnRemove, EFFECT_0, SPELL_AURA_FEATHER_FALL, AURA_EFFECT_HANDLE_REAL);
+        }
+    };
+
+    AuraScript* GetAuraScript() const override
+    {
+        return new sspell_dh_glide_AuraScript();
+    }
+
+    class spell_dh_glide_SpellScript : public SpellScript
+    {
+        PrepareSpellScript(spell_dh_glide_SpellScript);
+
+        SpellCastResult CheckRequirement()
+        {
+            if (auto player = GetCaster()->ToPlayer())
+                if (player->IsMounted())
+                    return SPELL_FAILED_NOT_ON_MOUNTED;
+
+            return SPELL_CAST_OK;
+        }
+
+        void Register() override
+        {
+            OnCheckCast += SpellCheckCastFn(spell_dh_glide_SpellScript::CheckRequirement);
+        }
+    };
+
+    SpellScript* GetSpellScript() const override
+    {
+        return new spell_dh_glide_SpellScript();
+    }
+};
+
 // 197125 - Chaos Strike
 class spell_dh_chaos_strike : public SpellScriptLoader
 {
@@ -66,5 +128,6 @@ class spell_dh_chaos_strike : public SpellScriptLoader
 
 void AddSC_demon_hunter_spell_scripts()
 {
+    new spell_dh_glide();
     new spell_dh_chaos_strike();
 }
